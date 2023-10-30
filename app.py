@@ -1,6 +1,5 @@
 import os
 
-os.system('pip install -U accelerate bitsandbytes')
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 from threading import Thread
