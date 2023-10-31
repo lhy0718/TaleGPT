@@ -8,15 +8,19 @@ import gradio as gr
 import torch
 from transformers import (AutoModelForCausalLM, AutoTokenizer,
                           StoppingCriteria, StoppingCriteriaList,
-                          TextIteratorStreamer)
+                          TextIteratorStreamer, BitsAndBytesConfig)
 
 MODEL = "beomi/KoAlpaca-Polyglot-12.8B"
-model = AutoModelForCausalLM.from_pretrained(
-    MODEL,
-    device_map="auto",
-    load_in_8bit=True,
-    revision="8bit",
-)
+if torch.cuda.is_available():
+    model = AutoModelForCausalLM.from_pretrained(
+        MODEL,
+        device_map="auto",
+        load_in_8bit=True,
+        revision="8bit",
+    )
+else:
+    model = AutoModelForCausalLM.from_pretrained(MODEL)
+    
 tokenizer = AutoTokenizer.from_pretrained(MODEL)
 
 
