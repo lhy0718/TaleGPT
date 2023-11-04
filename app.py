@@ -23,6 +23,9 @@ else:
     
 tokenizer = AutoTokenizer.from_pretrained(MODEL)
 
+with open('prompt.txt') as f:
+    prompt = f.read()
+
 
 class StopOnTokens(StoppingCriteria):
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs) -> bool:
@@ -37,23 +40,21 @@ def convert_history_item_to_message(history_item: list) -> str:
     return f"### 명령어:\n{history_item[0].strip()}\n### 판타지 동화 출력:\n{history_item[1].split('#')[0].strip()}"
 
 
-def answer(message, history):
-    pre_system_message = '''
-### 맥락:
-사용자의 명령에 따른 동화 판타지 소설을 출력합니다.
-'''
+def answer(message, history, top_p, top_k, temperature):
+    pre_system_message = prompt
     curr_system_message = '''
 ### 명령어:
-다음 명령에 대한 아동을 타겟으로 하는 500자 정도의 동화 또는 검/마법/기사/요정 등이 난무하는 판타지 소설을 출력해줘.
+다음 명령에 대한 아동을 타겟으로 하는 동화 또는 검/마법/기사/요정 등이 난무하는 판타지 소설을 출력해줘.
 '''
 
     stop = StopOnTokens()
 
+    message = message or ""
     history_transformer_format = history + [[message, ""]]
     
     messages = (
         pre_system_message
-        +"\n".join(map(convert_history_item_to_message, history_transformer_format[:-1])) 
+        + "\n".join(map(convert_history_item_to_message, history_transformer_format[:-1])) 
         + curr_system_message 
         + convert_history_item_to_message(history_transformer_format[-1])
     )
@@ -62,16 +63,17 @@ def answer(message, history):
 
     model_inputs = tokenizer([messages], return_token_type_ids=False, return_tensors="pt")
     if torch.cuda.is_available():
-        model_inputs = model_inputs.to('cuda')
+        model_inputs = model_inputs.to("cuda")
     streamer = TextIteratorStreamer(tokenizer, timeout=10., skip_prompt=True, skip_special_tokens=True)
     generate_kwargs = dict(
         model_inputs,
+        pad_token_id=tokenizer.eos_token_id,
         streamer=streamer,
         max_new_tokens=512,
         do_sample=True,
-        top_p=0.9,
-        top_k=1000,
-        temperature=0.5,
+        top_p=top_p,
+        top_k=top_k,
+        temperature=temperature,
         num_beams=1,
         stopping_criteria=StoppingCriteriaList([stop])
     )
@@ -80,15 +82,51 @@ def answer(message, history):
 
     partial_message  = ""
     for new_token in streamer:
-        if new_token != '<':
+        if new_token not in ["<", "#"]:
             partial_message += new_token
             yield partial_message
 
+with gr.Blocks(theme=gr.themes.Soft()) as demo:
+    chatbot = gr.Chatbot(
+        show_copy_button=True,
+        avatar_images=("images/user.png", "images/bot.png"),
+        render=False,
+    )
+    textbox = gr.Textbox(
+        placeholder = "여기에 입력하세요.",
+        scale=7,
+        render=False,
+    )
+    top_p_slider = gr.Slider(0, 1, value=0.95, label="단어 선택의 다양성", render=False)
+    top_k_slider = gr.Slider(0, 5000, value=2000, label="단어 선택의 가짓수", render=False)
+    temperature_slider = gr.Slider(0, 1, value=1, label="창의성", render=False)
+    
+    gr.ChatInterface(
+        answer,
+        chatbot=chatbot,
+        textbox=textbox,
+        examples=[
+            ["금화를 지키는 용"],
+            ["마법 동물원의 비밀"],
+            ["전설의 검"],
+        ],
+        title="TaleGPT (동화 / 판타지 소설 생성 인공지능)",
+        description="© 중앙대학교 기계학습자동화연구실 - CAU AutoML Lab",
+        submit_btn="제출",
+        stop_btn="멈춤",
+        retry_btn="🔄 다시 시도",
+        undo_btn="↩️ 되돌리기",
+        clear_btn="🗑️ 지우기",
+        additional_inputs=[top_p_slider, top_k_slider, temperature_slider]
+    )
+    
+    with open('createpopup.js') as f:
+        script = f.read()
+    gr.HTML(f'<script type="text/javascript">{script}</script>')
+    print_button = gr.Button(
+        value="🖨️ 프린트",
+        size="sm",
+    )
+    print_button.click(fn=None, _js="createPopupWithText()") # not working
 
-
-gr.ChatInterface(
-    answer,
-    examples=[""],
-    title="TaleGPT (동화 / 판타지 소설 생성 인공지능)",
-    description="© 중앙대학교 기계학습자동화연구실 - CAU AutoML Lab"
-).queue().launch(debug=True)
+demo.queue().launch(share=True)
