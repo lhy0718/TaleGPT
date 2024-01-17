@@ -17,15 +17,12 @@ if torch.cuda.is_available():
         device_map="auto",
         load_in_8bit=True,
         revision="8bit",
+        torch_dtype=torch.float16,
     )
 else:
     model = AutoModelForCausalLM.from_pretrained(MODEL)
     
 tokenizer = AutoTokenizer.from_pretrained(MODEL)
-
-with open('prompt.txt') as f:
-    prompt = f.read()
-
 
 class StopOnTokens(StoppingCriteria):
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs) -> bool:
@@ -37,14 +34,17 @@ class StopOnTokens(StoppingCriteria):
     
 
 def convert_history_item_to_message(history_item: list) -> str:
-    return f"### 명령어:\n{history_item[0].strip()}\n### 판타지 동화 출력:\n{history_item[1].split('#')[0].strip()}"
+    # return f"### 명령어:\n{history_item[0].strip()}\n### 출력:\n{history_item[1].split('#')[0].strip()}"
+    return f"### 제목: {history_item[0].strip()}\n### 출력: {history_item[1].split('#')[0].strip()}"
 
 
 def answer(message, history, top_p, top_k, temperature):
+    with open('prompt.txt') as f:
+        prompt = f.read()
     pre_system_message = prompt
     curr_system_message = '''
 ### 명령어:
-다음 명령에 대한 아동을 타겟으로 하는 동화 또는 검/마법/기사/요정 등이 난무하는 판타지 소설을 출력해줘.
+다음 제목의 동요를 생성하세요.
 '''
 
     stop = StopOnTokens()
@@ -106,11 +106,15 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
         chatbot=chatbot,
         textbox=textbox,
         examples=[
-            ["금화를 지키는 용"],
-            ["마법 동물원의 비밀"],
-            ["전설의 검"],
+            # ["금화를 지키는 용"],
+            # ["마법 동물원의 비밀"],
+            # ["전설의 검"],
+            ["달님"],
+            ["용이 나타났다!"],
+            ["가족의 사랑"],
         ],
-        title="TaleGPT (동화 / 판타지 소설 생성 인공지능)",
+        # title="TaleGPT (동화 / 판타지 소설 생성 인공지능)",
+        title="LyricGPT",
         description="© 중앙대학교 기계학습자동화연구실 - CAU AutoML Lab",
         submit_btn="제출",
         stop_btn="멈춤",
@@ -120,13 +124,13 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
         additional_inputs=[top_p_slider, top_k_slider, temperature_slider]
     )
     
-    with open('createpopup.js') as f:
-        script = f.read()
-    gr.HTML(f'<script type="text/javascript">{script}</script>')
-    print_button = gr.Button(
-        value="🖨️ 프린트",
-        size="sm",
-    )
-    print_button.click(fn=None, _js="createPopupWithText()") # not working
+    # with open('createpopup.js') as f:
+    #     script = f.read()
+    # gr.HTML(f'<script type="text/javascript">{script}</script>')
+    # print_button = gr.Button(
+    #     value="🖨️ 프린트",
+    #     size="sm",
+    # )
+    # print_button.click(fn=None, _js="createPopupWithText()") # not working
 
 demo.queue().launch(share=True)
