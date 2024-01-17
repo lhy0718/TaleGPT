@@ -17,7 +17,7 @@ if torch.cuda.is_available():
         device_map="auto",
         load_in_8bit=True,
         revision="8bit",
-        torch_dtype=torch.float16,
+        # torch_dtype=torch.float16,
     )
 else:
     model = AutoModelForCausalLM.from_pretrained(MODEL)
