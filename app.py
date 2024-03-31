@@ -8,7 +8,7 @@ import gradio as gr
 import torch
 from transformers import (AutoModelForCausalLM, AutoTokenizer,
                           StoppingCriteria, StoppingCriteriaList,
-                          TextIteratorStreamer, BitsAndBytesConfig)
+                          TextIteratorStreamer)
 
 MODEL = "beomi/KoAlpaca-Polyglot-12.8B"
 if torch.cuda.is_available():
