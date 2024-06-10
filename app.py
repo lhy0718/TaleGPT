@@ -1,3 +1,4 @@
+import gc
 import os
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -48,6 +49,9 @@ def convert_history_item_to_message(history_item: list) -> str:
 
 
 def answer(user_input, history, top_p, top_k, temperature):
+    gc.collect()
+    torch.cuda.empty_cache()
+
     with open("prompt.txt") as f:
         prompt = f.read()
 
