@@ -27,9 +27,6 @@ else:
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL)
 
-with open("prompt.txt") as f:
-    prompt = f.read()
-
 
 class StopOnTokens(StoppingCriteria):
     def __call__(
@@ -43,14 +40,16 @@ class StopOnTokens(StoppingCriteria):
 
 
 def convert_history_item_to_message(history_item: list) -> str:
-    return f"### 제목:\n{history_item[0].strip()}\n### 판타지 동화 출력:\n옛날 옛적에{history_item[1].split('#')[0].strip()}"
+    # history_item: [title, story]
+    return f"""
+### 제목:\n{history_item[0].strip()}
+### 판타지 동화 출력:
+옛날 옛적에, {history_item[1].split('#')[0].strip()}"""
 
 
 def answer(user_input, history, top_p, top_k, temperature):
-    curr_system_message = """
-### 명령어:
-다음 명령에 대한 아동을 타겟으로 하는 동화 또는 검/마법/기사/요정 등이 난무하는 판타지 소설을 출력합니다.
-"""
+    with open("prompt.txt") as f:
+        prompt = f.read()
 
     stop = StopOnTokens()
 
@@ -64,7 +63,6 @@ def answer(user_input, history, top_p, top_k, temperature):
         + "\n".join(
             map(convert_history_item_to_message, history_transformer_format[:-1])
         )
-        + curr_system_message
         + convert_history_item_to_message(history_transformer_format[-1])
     )
     print("\n========== Input Messages")
