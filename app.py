@@ -13,14 +13,23 @@ from transformers import (
     StoppingCriteria,
     StoppingCriteriaList,
     TextIteratorStreamer,
+    BitsAndBytesConfig,
 )
 
-MODEL = "beomi/Llama-3-Open-Ko-8B"
+# MODEL = "beomi/OPEN-SOLAR-KO-10.7B"
+# MODEL = "MLP-KTLim/llama-3-Korean-Bllossom-8B"
+# MODEL = "beomi/Llama-3-Open-Ko-8B"
+MODEL = "beomi/KoAlpaca-Polyglot-12.8B"
+
 if torch.cuda.is_available():
+    quantization_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+    )
     model = AutoModelForCausalLM.from_pretrained(
         MODEL,
         device_map="auto",
-        load_in_8bit=True,
+        quantization_config=quantization_config,
+        torch_dtype=torch.float16,
     )
 else:
     model = AutoModelForCausalLM.from_pretrained(MODEL)
@@ -32,7 +41,7 @@ class StopOnTokens(StoppingCriteria):
     def __call__(
         self, input_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs
     ) -> bool:
-        stop_ids = [self.tokenizer.eos_token_id] + self.tokenizer.convert_tokens_to_ids(
+        stop_ids = [tokenizer.eos_token_id] + tokenizer.convert_tokens_to_ids(
             ["#", "<"]
         )
         for stop_id in stop_ids:
