@@ -2,6 +2,7 @@ import gc
 import os
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 from threading import Thread
 
@@ -10,26 +11,24 @@ import torch
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
+    BitsAndBytesConfig,
     StoppingCriteria,
     StoppingCriteriaList,
     TextIteratorStreamer,
-    BitsAndBytesConfig,
 )
 
+MODEL = "beomi/KoAlpaca-Polyglot-12.8B"  # 제일 좋음
+# MODEL = "beomi/Solar-Ko-Recovery-11B"
 # MODEL = "beomi/OPEN-SOLAR-KO-10.7B"
-# MODEL = "MLP-KTLim/llama-3-Korean-Bllossom-8B"
 # MODEL = "beomi/Llama-3-Open-Ko-8B"
-MODEL = "beomi/KoAlpaca-Polyglot-12.8B"
+# MODEL = "MLP-KTLim/llama-3-Korean-Bllossom-8B"
 
 if torch.cuda.is_available():
-    quantization_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-    )
+    quantization_config = BitsAndBytesConfig(load_in_8bit=True)
     model = AutoModelForCausalLM.from_pretrained(
         MODEL,
         device_map="auto",
         quantization_config=quantization_config,
-        torch_dtype=torch.float16,
     )
 else:
     model = AutoModelForCausalLM.from_pretrained(MODEL)
@@ -52,6 +51,11 @@ class StopOnTokens(StoppingCriteria):
 
 def convert_history_item_to_message(history_item: list) -> str:
     # history_item: [title, story]
+    title, story = history_item
+    if title is None:
+        title = ""
+    if story is None:
+        story = ""
     return f"""
 ### 제목:\n{history_item[0].strip()}
 ### 판타지 동화 출력:
@@ -87,9 +91,11 @@ def answer(user_input, history, top_p, top_k, temperature):
     )
     if torch.cuda.is_available():
         model_inputs = model_inputs.to("cuda")
+
     streamer = TextIteratorStreamer(
         tokenizer, timeout=10.0, skip_prompt=True, skip_special_tokens=True
     )
+
     generate_kwargs = dict(
         model_inputs,
         pad_token_id=tokenizer.eos_token_id,
@@ -102,6 +108,7 @@ def answer(user_input, history, top_p, top_k, temperature):
         num_beams=1,
         stopping_criteria=StoppingCriteriaList([stop]),
     )
+
     t = Thread(target=model.generate, kwargs=generate_kwargs)
     t.start()
 
