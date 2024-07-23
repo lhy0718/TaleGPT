@@ -15,13 +15,12 @@ from transformers import (
     TextIteratorStreamer,
 )
 
-MODEL = "beomi/KoAlpaca-Polyglot-12.8B"
+MODEL = "beomi/Llama-3-Open-Ko-8B"
 if torch.cuda.is_available():
     model = AutoModelForCausalLM.from_pretrained(
         MODEL,
         device_map="auto",
         load_in_8bit=True,
-        revision="8bit",
     )
 else:
     model = AutoModelForCausalLM.from_pretrained(MODEL)
@@ -33,7 +32,9 @@ class StopOnTokens(StoppingCriteria):
     def __call__(
         self, input_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs
     ) -> bool:
-        stop_ids = [2, 6, 31]  # "<|endoftext|>": 2, "#": 6, "<": 31
+        stop_ids = [self.tokenizer.eos_token_id] + self.tokenizer.convert_tokens_to_ids(
+            ["#", "<"]
+        )
         for stop_id in stop_ids:
             if input_ids[0][-1] == stop_id:
                 return True
