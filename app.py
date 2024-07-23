@@ -56,10 +56,7 @@ def convert_history_item_to_message(history_item: list) -> str:
         title = ""
     if story is None:
         story = ""
-    return f"""
-### 제목:\n{history_item[0].strip()}
-### 판타지 동화 출력:
-옛날 옛적에, {history_item[1].split('#')[0].strip()}"""
+    return f"### 제목:\n{title.strip()}\n### 판타지 동화 출력:\n옛날 옛적에, {story.split('#')[0].strip()}"
 
 
 def answer(user_input, history, top_p, top_k, temperature):
@@ -72,16 +69,12 @@ def answer(user_input, history, top_p, top_k, temperature):
     stop = StopOnTokens()
 
     user_input = user_input or ""
-    history_transformer_format = history + [
-        [user_input, ""]
-    ]  # history: [[title, story], ...]
+    history += [[user_input, ""]]  # history: [[title, story], ...]
 
     messages = (
         prompt
-        + "\n".join(
-            map(convert_history_item_to_message, history_transformer_format[:-1])
-        )
-        + convert_history_item_to_message(history_transformer_format[-1])
+        + "\n".join(map(convert_history_item_to_message, history[:-1]))
+        + convert_history_item_to_message(history[-1])
     )
     print("\n========== Input Messages")
     print(messages)
