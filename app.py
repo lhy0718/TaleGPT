@@ -74,8 +74,8 @@ def answer(user_input, history, top_p, top_k, temperature):
 
     input_text = INITIAL_PROMPT + "\n".join(
         [
-            convert_history_item_to_message(item) for item in history[-5:]
-        ]  # 최근 5개만 보여줌
+            convert_history_item_to_message(item) for item in history[-6:]
+        ]  # 최근 5개의 fewshot + user_input
     )
 
     print("\n========== Input Messages")
