@@ -1,9 +1,10 @@
-import gc
 import os
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
+import gc
+import json
 from threading import Thread
 
 import gradio as gr
@@ -16,6 +17,9 @@ from transformers import (
     StoppingCriteriaList,
     TextIteratorStreamer,
 )
+
+INITIAL_PROMPT = "### 명령어:\n다음 명령에 대한 아동을 타겟으로 하는 동화 또는 각종 판타지 요소가 난무하는 판타지 소설을 출력합니다.\n"
+GEN_PROMPT_FORMAT = "### 제목:\n{title}\n### 판타지 동화 출력:\n{story}"
 
 MODEL = "beomi/KoAlpaca-Polyglot-12.8B"  # 제일 좋음
 # MODEL = "beomi/Solar-Ko-Recovery-11B"
@@ -50,37 +54,35 @@ class StopOnTokens(StoppingCriteria):
 
 
 def convert_history_item_to_message(history_item: list) -> str:
-    # history_item: [title, story]
     title, story = history_item
-    if title is None:
-        title = ""
-    if story is None:
-        story = ""
-    return f"### 제목:\n{title.strip()}\n### 판타지 동화 출력:\n옛날 옛적에, {story.split('#')[0].strip()}"
+    title = title or ""
+    story = story or ""
+    return GEN_PROMPT_FORMAT.format(title=title, story=story)
 
 
 def answer(user_input, history, top_p, top_k, temperature):
     gc.collect()
     torch.cuda.empty_cache()
 
-    with open("prompt.txt") as f:
-        prompt = f.read()
+    with open("fewshot.json") as f:
+        fewshot = json.load(f)
+        history = fewshot + history
 
     stop = StopOnTokens()
 
-    user_input = user_input or ""
     history += [[user_input, ""]]  # history: [[title, story], ...]
 
-    messages = (
-        prompt
-        + "\n".join(map(convert_history_item_to_message, history[:-1]))
-        + convert_history_item_to_message(history[-1])
+    input_text = INITIAL_PROMPT + "\n".join(
+        [
+            convert_history_item_to_message(item) for item in history[-5:]
+        ]  # 최근 5개만 보여줌
     )
+
     print("\n========== Input Messages")
-    print(messages)
+    print(input_text)
 
     model_inputs = tokenizer(
-        [messages], return_token_type_ids=False, return_tensors="pt"
+        [input_text], return_token_type_ids=False, return_tensors="pt"
     )
     if torch.cuda.is_available():
         model_inputs = model_inputs.to("cuda")
