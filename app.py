@@ -161,4 +161,4 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
         additional_inputs=[top_p_slider, top_k_slider, temperature_slider],
     )
 
-demo.queue().launch(share=True, auth=("automl", "208217"))
+demo.queue().launch(share=False, auth=("automl", "208217"), server_name="0.0.0.0")
