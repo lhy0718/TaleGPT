@@ -1,4 +1,5 @@
 import os
+import random
 from tkinter import NO
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -74,8 +75,8 @@ def answer(user_input, history, top_p, top_k, temperature):
         gc.collect()
         torch.cuda.empty_cache()
 
-        with open("fewshot.json") as f:
-            fewshot = json.load(f)
+        with open("dataset.json") as f:
+            fewshot = random.choices(json.load(f), k=5)
             history = fewshot + history
 
         stop = StopOnTokens()
@@ -161,4 +162,4 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
         additional_inputs=[top_p_slider, top_k_slider, temperature_slider],
     )
 
-demo.queue().launch(share=False, auth=("automl", "208217"), server_name="0.0.0.0")
+demo.queue().launch(share=True, auth=("automl", "208217"), server_name="0.0.0.0")
