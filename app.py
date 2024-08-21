@@ -1,6 +1,5 @@
 import os
 import random
-from tkinter import NO
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
@@ -162,4 +161,4 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
         additional_inputs=[top_p_slider, top_k_slider, temperature_slider],
     )
 
-demo.queue().launch(share=True, auth=("automl", "208217"), server_name="0.0.0.0")
+demo.queue().launch(share=True, auth=("automl", "208217"))
