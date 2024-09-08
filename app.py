@@ -46,7 +46,7 @@ def answer(user_input, history, top_p, top_k, temperature):
         ).to("cuda")
 
         streamer = TextIteratorStreamer(
-            tokenizer, timeout=10.0, skip_prompt=True, skip_special_tokens=True
+            tokenizer, timeout=3, skip_prompt=True, skip_special_tokens=True
         )
 
         generate_kwargs = dict(
@@ -88,7 +88,6 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
         0, 5000, value=2000, label="단어 선택의 가짓수", render=False
     )
     temperature_slider = gr.Slider(0, 1, value=1, label="창의성", render=False)
-    stop_btn = gr.Button("멈춤", render=False, variant="stop")
 
     gr.ChatInterface(
         answer,
