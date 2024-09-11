@@ -16,12 +16,14 @@ def convert_history_to_messages(history: list = []) -> list:
     return messages
 
 
-def inference(user_input, history):
+def inference(user_input, history, top_p, temperature):
     if (len(history) == 0 or history[-1][1] == NO_INPUT_WARNING) and user_input == "":
         yield NO_INPUT_WARNING
     else:
         if user_input.strip() == "":  # 이전 동화를 이어서 출력
-            history = convert_history_to_messages(history[-4:])
+            history = convert_history_to_messages(
+                history[-4:]
+            )  # 마지막 4개의 대화만 이어서 출력
             history.append({"role": "system", "content": CONTINUE_PROMPT})
         else:  # 새로운 동화 생성
             history = convert_history_to_messages()
@@ -32,6 +34,8 @@ def inference(user_input, history):
             messages=history,
             stream=True,
             max_tokens=1024,
+            temperature=temperature,
+            top_p=top_p,
         )
 
         for chunk in output:
@@ -51,6 +55,11 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
         scale=7,
         render=False,
     )
+    top_p_slider = gr.Slider(0, 1, value=0.95, label="단어 선택의 다양성", render=False)
+    top_k_slider = gr.Slider(
+        0, 5000, value=2000, label="단어 선택의 가짓수", render=False
+    )
+    temperature_slider = gr.Slider(0, 1, value=1, label="창의성", render=False)
 
     gr.ChatInterface(
         inference,
@@ -68,9 +77,10 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
         retry_btn="🔄 다시 시도",
         undo_btn="↩️ 되돌리기",
         clear_btn="🗑️ 지우기",
+        additional_inputs=[top_p_slider, temperature_slider],
     )
 
 demo.queue(default_concurrency_limit=2).launch(
-    # share=True,
+    share=True,
     # auth=("automl", "208217"),
 )

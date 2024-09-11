@@ -9,7 +9,7 @@ container_cache=/root/.cache/huggingface/
 container_hub=/root/.cache/huggingface/hub
 container_tokenizer_config_path=/tokenizer-config.json
 
-# options: https://huggingface.co/docs/text-generation-inference/main/en/architecture#routers-command-line
+# options: https://huggingface.co/docs/text-generation-inference/main/en/reference/launcher
 docker run -it --rm --gpus all --shm-size 1g -p 8080:80 \
     -v $host_cache:$container_cache \
     -v $host_tokenizer_config_path:$container_tokenizer_config_path \
