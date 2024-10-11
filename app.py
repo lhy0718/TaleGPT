@@ -1,3 +1,6 @@
+import json
+import random
+
 import gradio as gr
 from huggingface_hub import InferenceClient
 
@@ -10,6 +13,13 @@ client = InferenceClient(base_url="http://127.0.0.1:8080")
 
 def convert_history_to_messages(history: list = []) -> list:
     messages = [{"role": "system", "content": INITIAL_PROMPT}]
+
+    with open("dataset.json") as f:  # few-shot examples
+        examples = json.load(f)
+    for example in random.sample(examples, 3):
+        messages.append({"role": "user", "content": example[0]})
+        messages.append({"role": "assistant", "content": example[1]})
+
     for user, assistant in history:
         messages.append({"role": "user", "content": user})
         messages.append({"role": "assistant", "content": assistant})
