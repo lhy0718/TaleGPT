@@ -54,7 +54,7 @@ def inference(user_input, history, top_p, temperature):
 
 
 # Interface
-with gr.Blocks(theme=gr.themes.Soft()) as demo:
+with gr.Blocks(theme=gr.themes.Soft(), css_paths="css/custom.css") as demo:
     chatbot = gr.Chatbot(
         show_copy_button=True,
         avatar_images=("images/user.png", "images/bot.png"),
@@ -84,9 +84,6 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
         description="© 중앙대학교 기계학습자동화연구실 - CAU AutoML Lab",
         submit_btn="제출",
         stop_btn="멈춤",
-        retry_btn="🔄 다시 시도",
-        undo_btn="↩️ 되돌리기",
-        clear_btn="🗑️ 지우기",
         additional_inputs=[top_p_slider, temperature_slider],
     )
 
