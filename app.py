@@ -63,6 +63,8 @@ with gr.Blocks(theme=gr.themes.Soft(), css_paths="css/custom.css") as demo:
     textbox = gr.Textbox(
         placeholder="여기에 입력하세요. (아무것도 입력하지 않으면 이전 동화를 이어서 출력합니다.)",
         scale=7,
+        submit_button=True,
+        stop_button=True,
         render=False,
     )
     top_p_slider = gr.Slider(0, 1, value=0.95, label="단어 선택의 다양성", render=False)
@@ -82,8 +84,6 @@ with gr.Blocks(theme=gr.themes.Soft(), css_paths="css/custom.css") as demo:
         ],
         title="TaleGPT (동화 / 판타지 소설 생성 인공지능)",
         description="© 중앙대학교 기계학습자동화연구실 - CAU AutoML Lab",
-        submit_btn="제출",
-        stop_btn="멈춤",
         additional_inputs=[top_p_slider, temperature_slider],
     )
 
