@@ -1,12 +1,12 @@
----
-title: TaleGPT Test
-emoji: 😻
-colorFrom: pink
-colorTo: indigo
-sdk: gradio
-sdk_version: 3.50.2
-app_file: app.py
-pinned: false
----
+# LLM 추론 엔드포인트 실행
 
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+```
+sh TGI.sh
+```
+
+# 웹 서비스 실행
+
+```
+conda env create -f env.yaml # miniconda 설치 후 실행
+python src/app.py
+```
