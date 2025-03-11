@@ -8,5 +8,6 @@ sh TGI.sh
 
 ```
 conda env create -f env.yaml # miniconda 설치 후 실행
-python src/app.py
+conda activate demo
+python app.py
 ```
